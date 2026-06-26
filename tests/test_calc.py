@@ -53,7 +53,7 @@ class TestEdgeCases:
         assert calculate("3", "-", "10") == "-7"
 
     def test_division_by_zero(self):
-        with pytest.raises(InvalidExpression, match="zero"):
+        with pytest.raises(InvalidExpression, match="Undefined!"):
             calculate("5", "/", "0")
 
     def test_invalid_operator(self):
