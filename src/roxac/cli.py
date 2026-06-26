@@ -3,7 +3,12 @@ CLI entry point.
 """
 
 import getpass
+import os
 import sys
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning, module="oqs")
+os.environ["OQS_PYTHON_FAULTHANDLER"] = "0"
 
 from .auth import derive_master_key, generate_master_key_salt, hash_password, verify_password
 from .calc import calculate
@@ -42,19 +47,19 @@ _BANNER = f"""\
 """
 
 _USAGE = f"""\
-roXac v{VERSION} - Post-Quantum Encrypted Calculator
 
-Usage:
-  roxac <num1> <op> <num2>                         Perform a calculation
+COMMANDS
+  roxac <num1> <op> <num2>                          Perform a calculation
   roxac history                                     Show calculation history
   roxac sudo rm -rf / --no-preserve-root            Clear calculation history
   roxac status                                      Show status
 
-Operators: + - * /
+OPERATORS
+  + - x /
 
-Example:
+EXAMPLES
   roxac 10 + 10
-  roxac 69 * 69
+  roxac 69 x 69
 """
 
 
@@ -80,7 +85,7 @@ def _load_secret_key(password: str) -> bytes:
 
 def _first_run_setup() -> None:
     print("> Welcome to roXac! A simple CLI calculator.")
-    print("> --------------------------------------------------")
+    print(f"  ----------------------------------------------------------------------------------------------------")
     print("> Set a master password to protect your calculation history.\n")
 
     while True:
@@ -105,7 +110,7 @@ def _first_run_setup() -> None:
 
     initialize(password_hash, public_key, encrypted_private_key, salt)
     print("> [done] Setup complete.")
-    print("> --------------------------------------------------")
+    print(f"  ----------------------------------------------------------------------------------------------------")
 
 
 # ---------------------------------------------------------------------------
@@ -160,9 +165,9 @@ def cmd_history() -> None:
         return
 
     print("> [info] Calculation history:")
-    print()
+    print(f"  ----------------------------------------------------------------------------------------------------")
     print("\n\n".join(entries))
-
+    print(f"  ----------------------------------------------------------------------------------------------------")
 
 def cmd_clear() -> None:
     if not is_configured():
@@ -184,20 +189,22 @@ def cmd_clear() -> None:
 
 def cmd_status() -> None:
     if not is_configured():
+        print(f"  ----------------------------------------------------------------------------------------------------")
         print("> [error] Not configured yet.")
-        print("> [tip] Run any calculation to complete first-time setup.")
+        print("> [tip]   Run any calculation to complete first-time setup.")
+        print(f"  ----------------------------------------------------------------------------------------------------")
         return
 
     config = get_config()
-    sep = "-" * 50
+    sep = "-" * 100
     print(f"> [info] roXac Status")
-    print(sep)
+    print(f"  {sep}")
     print(f"> Algorithm      : {config.get('kem_algorithm', KEM_ALGORITHM)}")
     print(f"> Cipher         : {config.get('cipher', CIPHER)}")
     print(f"> Password KDF   : {config.get('kdf', KDF)}")
     print(f"> History entries: {config.get('history_entries', 0)}")
     print(f"> Version        : {config.get('version', VERSION)}")
-    print(sep)
+    print(f"  {sep}")
 
 
 # ---------------------------------------------------------------------------
@@ -216,7 +223,7 @@ def main() -> None:
         return
 
     if args in (["-v"], ["--version"]):
-        print(f"> roXac {VERSION}")
+        print(f"> roXac v{VERSION}")
         return
 
     if args == ["history"]:
@@ -228,11 +235,10 @@ def main() -> None:
     elif len(args) == 3:
         cmd_calculate(args[0], args[1], args[2])
     else:
-        print(f"> [error] Unrecognised command.\n")
-        print(f"> --------------------------------------------------")
-        print(f"> Only the following commands are permitted")
-        print(_USAGE)
-        print(f"> --------------------------------------------------")
+        print(f"  ----------------------------------------------------------------------------------------------------")
+        print(f"> [error] Unrecognised command.")
+        print(f"> [tip]   Run `roxac --help` for available commands.")
+        print(f"  ----------------------------------------------------------------------------------------------------")
         sys.exit(1)
 
 
