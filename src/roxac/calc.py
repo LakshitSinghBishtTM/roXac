@@ -19,7 +19,7 @@ def calculate(num1: str, operator: str, num2: str) -> str:
 
     Args:
         num1:     First operand as a string (integer or decimal).
-        operator: One of +, -, *, /.
+        operator: One of +, -, x, \*, /.
         num2:     Second operand as a string.
 
     Returns:
@@ -48,7 +48,7 @@ def calculate(num1: str, operator: str, num2: str) -> str:
         result = a * b
     elif operator == "/":
         if b == 0:
-            raise InvalidExpression("Division by zero is undefined in this universe.")
+            raise InvalidExpression("Undefined!")
         result = a / b
 
     return _format_decimal(result)
