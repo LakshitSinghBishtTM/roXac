@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "roXac"
+version = "1.0.0"
+description = "A simple CLI calculator"
+readme = "README.md"
+license = { text = "GPL-3.0" }
+requires-python = ">=3.10"
+keywords = ["calculator", "simple", "CLI"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Topic :: Utilities",
+    "Environment :: Console",
+]
+dependencies = [
+    "argon2-cffi>=21.3.0",
+    "cryptography>=41.0.0",
+    "liboqs-python>=0.10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+]
+
+[project.scripts]
+roxac = "roxac.cli:main"
+
+[project.urls]
+Repository = "https://github.com/LakshitSinghBishtTM/roXac"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/roxac"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
