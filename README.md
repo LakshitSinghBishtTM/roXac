@@ -4,8 +4,7 @@
        width="260">
 </p>
 
-<h2 align="center">roXaC</h2>
-<p align="center">A simple CLI calculator</p>
+<h2 align="center">A simple CLI calculator</h2>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="License"></a>
