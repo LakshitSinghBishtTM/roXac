@@ -1,6 +1,17 @@
-# roXaC
+<p align="center">
+  <img alt="roXac Logo"
+       src="assets/logo.svg"
+       width="260">
+</p>
 
-roXac is a simple pip-installable CLI calculator.
+<h2 align="center">roXaC</h2>
+<p align="center">A simple CLI calculator</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg" alt="License"></a>
+  <img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/status-completed-orange" alt="Status">
+</p>
 
 ---
 
