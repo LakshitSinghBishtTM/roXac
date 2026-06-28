@@ -44,6 +44,9 @@ class TestPrecision:
     def test_strips_trailing_decimal_point(self):
         assert calculate("3.0", "*", "2.0") == "6"
 
+    def test_check_negative_zero(self):
+        assert calculate("-3", "*", "0") == "0"
+
 
 class TestEdgeCases:
     def test_negative_numbers(self):
