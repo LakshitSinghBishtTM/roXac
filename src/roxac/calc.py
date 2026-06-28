@@ -19,7 +19,7 @@ def calculate(num1: str, operator: str, num2: str) -> str:
 
     Args:
         num1:     First operand as a string (integer or decimal).
-        operator: One of +, -, x, \*, /.
+        operator: One of +, -, x, /.
         num2:     Second operand as a string.
 
     Returns:
@@ -61,6 +61,8 @@ def _format_decimal(d: Decimal) -> str:
     Uses fixed-point notation (never scientific notation) and strips
     trailing zeros/dots so '4.00' becomes '4' and '1.50' becomes '1.5'.
     """
+    if d == 0:
+        d = abs(d)  # normalize -0 to 0
     # Fixed-point notation avoids '1E+24' style output for large integers.
     s = format(d, "f")
     if "." in s:
