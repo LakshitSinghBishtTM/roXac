@@ -2,7 +2,11 @@
 
 import pytest
 from unittest.mock import patch
+
+oqs = pytest.importorskip("oqs", reason="liboqs not installed; skipping history crypto tests")
+
 from roxac.crypto import generate_keypair
+from roxac.exceptions import HistoryDecryptionError, PartialHistoryError
 from roxac.history import append_entry, clear_history, read_all_entries
 
 
@@ -65,3 +69,48 @@ def test_history_file_is_not_plaintext(keypair, history_file):
     raw = history_file.read_bytes()
     assert b"42" not in raw
     assert b"roxac" not in raw
+
+class TestPartialHistoryRecovery:
+
+    def test_truncated_trailing_entry_recovers_earlier_entries(self, keypair, history_file):
+        pub, priv = keypair
+        good_entries = [
+            "$ roxac 1 + 1\n> 2",
+            "$ roxac 2 + 2\n> 4",
+        ]
+        with patch("roxac.history._history_path", return_value=history_file):
+            for e in good_entries:
+                append_entry(e, pub)
+
+            append_entry("$ roxac 3 + 3\n> 6", pub)
+            truncated = history_file.read_bytes()[:-5]
+            history_file.write_bytes(truncated)
+
+            with pytest.raises(PartialHistoryError) as excinfo:
+                read_all_entries(priv)
+
+            assert excinfo.value.entries == good_entries
+
+    def test_fully_corrupted_history_with_nothing_recoverable_raises_plain_error(
+        self, keypair, history_file
+    ):
+        _, priv = keypair
+        with patch("roxac.history._history_path", return_value=history_file):
+            # Garbage from byte zero -- not even the first entry parses.
+            history_file.write_bytes(b"\x00" * 20)
+
+            with pytest.raises(HistoryDecryptionError) as excinfo:
+                read_all_entries(priv)
+
+            assert not isinstance(excinfo.value, PartialHistoryError)
+
+    def test_partial_history_error_is_a_history_decryption_error(self, keypair, history_file):
+        pub, priv = keypair
+        with patch("roxac.history._history_path", return_value=history_file):
+            append_entry("$ roxac 1 + 1\n> 2", pub)
+            append_entry("$ roxac 9 + 9\n> 18", pub)
+            truncated = history_file.read_bytes()[:-3]
+            history_file.write_bytes(truncated)
+
+            with pytest.raises(HistoryDecryptionError):
+                read_all_entries(priv)
