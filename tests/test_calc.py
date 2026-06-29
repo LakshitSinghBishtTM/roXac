@@ -21,12 +21,10 @@ class TestBasicOperations:
 
 class TestPrecision:
     def test_no_float_rounding(self):
-        # Classic float trap: 0.1 + 0.2 == 0.3 exactly with Decimal
         assert calculate("0.1", "+", "0.2") == "0.3"
 
     def test_division_repeating_decimal(self):
         result = calculate("1", "/", "3")
-        # Should produce many digits, not just 0.33
         assert result.startswith("0.")
         assert len(result) > 20
 
@@ -43,9 +41,6 @@ class TestPrecision:
 
     def test_strips_trailing_decimal_point(self):
         assert calculate("3.0", "*", "2.0") == "6"
-
-    def test_check_negative_zero(self):
-        assert calculate("-3", "*", "0") == "0"
 
 
 class TestEdgeCases:
@@ -72,6 +67,68 @@ class TestEdgeCases:
             calculate("1", "+", "xyz")
 
     def test_x_operator_not_accepted(self):
-        # 'x' is a CLI alias normalised before reaching calc.py
         with pytest.raises(InvalidExpression):
             calculate("3", "x", "4")
+
+
+class TestZeroResultSign:
+    def test_subtracting_equal_numbers(self):
+        assert calculate("5", "-", "5") == "0"
+
+    def test_adding_opposite_numbers(self):
+        assert calculate("-5", "+", "5") == "0"
+
+    def test_multiplying_negative_by_zero(self):
+        assert calculate("-3", "*", "0") == "0"
+
+    def test_multiplying_zero_by_negative(self):
+        assert calculate("0", "*", "-7") == "0"
+
+    def test_subtracting_zero_decimals(self):
+        assert calculate("0", "-", "0.0") == "0"
+
+    def test_negative_zero_result_is_clean_zero(self):
+        assert calculate("0", "*", "-1") == "0"
+
+
+class TestNonFiniteInputs:
+    NON_FINITE = ["inf", "-inf", "Infinity", "-Infinity", "nan", "NaN"]
+    OPS = ["+", "-", "*", "/"]
+
+    @pytest.mark.parametrize("op", OPS)
+    @pytest.mark.parametrize("bad", NON_FINITE)
+    def test_non_finite_first_operand_rejected(self, bad, op):
+        with pytest.raises(InvalidExpression):
+            calculate(bad, op, "5")
+
+    @pytest.mark.parametrize("op", OPS)
+    @pytest.mark.parametrize("bad", NON_FINITE)
+    def test_non_finite_second_operand_rejected(self, bad, op):
+        with pytest.raises(InvalidExpression):
+            calculate("5", op, bad)
+
+    def test_inf_minus_inf_does_not_crash(self):
+        with pytest.raises(InvalidExpression):
+            calculate("inf", "-", "inf")
+
+    def test_inf_times_zero_does_not_crash(self):
+        with pytest.raises(InvalidExpression):
+            calculate("inf", "*", "0")
+
+    def test_finite_divided_by_inf_does_not_blow_up_output(self):
+        with pytest.raises(InvalidExpression):
+            calculate("5", "/", "inf")
+
+
+class TestUnderscoreGroupingRejected:
+    def test_underscore_in_first_operand_rejected(self):
+        with pytest.raises(InvalidExpression):
+            calculate("5_000", "+", "5")
+
+    def test_underscore_in_second_operand_rejected(self):
+        with pytest.raises(InvalidExpression):
+            calculate("5", "+", "5_000")
+
+    def test_underscore_in_decimal_rejected(self):
+        with pytest.raises(InvalidExpression):
+            calculate("1_0.5", "+", "1")
