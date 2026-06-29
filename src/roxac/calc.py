@@ -27,17 +27,24 @@ def calculate(num1: str, operator: str, num2: str) -> str:
 
     Raises:
         InvalidExpression: For unsupported operators, non-numeric inputs,
-                           or division by zero.
+                           non-finite inputs (inf/-inf/nan), or division
+                           by zero.
     """
     if operator not in VALID_OPERATORS:
         raise InvalidExpression(
             f"Invalid operator '{operator}'. Supported operators: + - * /"
         )
 
+    if "_" in num1 or "_" in num2:
+        raise InvalidExpression(f"Invalid number(s): '{num1}', '{num2}'")
+
     try:
         a = Decimal(num1)
         b = Decimal(num2)
     except InvalidOperation:
+        raise InvalidExpression(f"Invalid number(s): '{num1}', '{num2}'")
+
+    if not (a.is_finite() and b.is_finite()):
         raise InvalidExpression(f"Invalid number(s): '{num1}', '{num2}'")
 
     if operator == "+":
@@ -63,6 +70,7 @@ def _format_decimal(d: Decimal) -> str:
     """
     if d == 0:
         d = abs(d)  # normalize -0 to 0
+
     # Fixed-point notation avoids '1E+24' style output for large integers.
     s = format(d, "f")
     if "." in s:
