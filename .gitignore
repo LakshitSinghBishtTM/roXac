@@ -1,6 +1,4 @@
 # .gitignore
 
-.venv
 liboqs/
 __pycache__/
-
