@@ -31,6 +31,7 @@ from .exceptions import (
     HistoryDecryptionError,
     HistoryEncryptionError,
     InvalidExpression,
+    PartialHistoryError,
 )
 from .history import append_entry, clear_history, read_all_entries
 
@@ -81,6 +82,11 @@ def _load_secret_key(password: str) -> bytes:
     master_key = derive_master_key(password, salt)
     encrypted_private_key = get_encrypted_private_key()
     return decrypt_with_master_key(encrypted_private_key, master_key)
+
+
+def _report_config_error(exc: ConfigError) -> None:
+    print(f"> [error] roXac installation appears incomplete or corrupted: {exc}")
+    print("> [tip]   Try deleting ~/.roxac and running a calculation to set up again.")
 
 
 def _first_run_setup() -> None:
@@ -150,12 +156,22 @@ def cmd_history() -> None:
 
     try:
         secret_key = _load_secret_key(password)
-    except (AuthenticationError, ConfigError):
+    except AuthenticationError:
         print("> [error] Wrong password.")
+        sys.exit(1)
+    except ConfigError as exc:
+        _report_config_error(exc)
         sys.exit(1)
 
     try:
         entries = read_all_entries(secret_key)
+    except PartialHistoryError as exc:
+        print(
+            f"> [warn] History is partially corrupted: {len(exc.entries)} "
+            f"entr{'y' if len(exc.entries) == 1 else 'ies'} recovered, "
+            f"the rest is unreadable."
+        )
+        entries = exc.entries
     except HistoryDecryptionError as exc:
         print(f"> [error] Error reading history: {exc}")
         sys.exit(1)
@@ -178,8 +194,11 @@ def cmd_clear() -> None:
 
     try:
         _load_secret_key(password)   # verification only; key not needed for clear
-    except (AuthenticationError, ConfigError):
+    except AuthenticationError:
         print("> [error] Wrong password.")
+        sys.exit(1)
+    except ConfigError as exc:
+        _report_config_error(exc)
         sys.exit(1)
 
     clear_history()
