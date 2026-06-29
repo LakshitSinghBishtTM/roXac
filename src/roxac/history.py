@@ -17,7 +17,7 @@ from pathlib import Path
 from .config import get_app_dir
 from .constants import HISTORY_FILE
 from .crypto import encrypt_history_entry, decrypt_history_entry
-from .exceptions import HistoryDecryptionError, HistoryEncryptionError
+from .exceptions import HistoryDecryptionError, HistoryEncryptionError, PartialHistoryError
 
 
 def _history_path() -> Path:
@@ -48,7 +48,12 @@ def read_all_entries(private_key: bytes) -> list[str]:
         List of plaintext entry strings, oldest first.
 
     Raises:
-        HistoryDecryptionError: if any entry fails to decrypt.
+        HistoryDecryptionError: if first entry fails to decrypt.
+        PartialHistoryError: if one or more entries decrypted successfully
+            but a later entry (typically a truncated trailing entry from a
+            crash mid-append) could not be. Carries the entries that *were*
+            recovered via `.entries`, so a single bad trailing entry no
+            longer makes every earlier entry inaccessible too.
     """
     path = _history_path()
     if not path.exists() or path.stat().st_size == 0:
@@ -59,7 +64,12 @@ def read_all_entries(private_key: bytes) -> list[str]:
     offset = 0
 
     while offset < len(data):
-        entry, offset = decrypt_history_entry(private_key, data, offset)
+        try:
+            entry, offset = decrypt_history_entry(private_key, data, offset)
+        except HistoryDecryptionError as exc:
+            if entries:
+                raise PartialHistoryError(entries, exc) from exc
+            raise
         entries.append(entry)
 
     return entries
