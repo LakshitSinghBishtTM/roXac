@@ -124,6 +124,10 @@ def initialize(
     except Exception as exc:
         raise ConfigError(f"Could not create app directory: {exc}") from exc
 
+    _write(app_dir / AUTH_FILE, password_hash.encode(), mode=0o600)
+    _write(app_dir / KEM_PUBLIC_KEY_FILE, public_key, mode=0o644)
+    _write(app_dir / KEM_PRIVATE_KEY_FILE, encrypted_private_key, mode=0o600)
+
     config = {
         "version": VERSION,
         "kem_algorithm": KEM_ALGORITHM,
@@ -133,10 +137,6 @@ def initialize(
         "master_key_salt": base64.b64encode(master_key_salt).decode("ascii"),
     }
     save_config(config)
-
-    _write(app_dir / AUTH_FILE, password_hash.encode(), mode=0o600)
-    _write(app_dir / KEM_PUBLIC_KEY_FILE, public_key, mode=0o644)
-    _write(app_dir / KEM_PRIVATE_KEY_FILE, encrypted_private_key, mode=0o600)
 
 
 def _write(path: Path, data: bytes, mode: int) -> None:
