@@ -26,6 +26,21 @@ class HistoryDecryptionError(RoXacError):
     pass
 
 
+class PartialHistoryError(HistoryDecryptionError):
+    """
+    Raised when history.enc contains a corrupted or truncated entry, but one
+    or more earlier entries were decrypted successfully before the failure."""
+
+    def __init__(self, entries: list[str], cause: Exception):
+        count = len(entries)
+        super().__init__(
+            f"{count} entr{'y' if count == 1 else 'ies'} recovered; "
+            f"history is corrupted or truncated beyond that point ({cause})"
+        )
+        self.entries = entries
+        self.cause = cause
+
+
 class FirstRunRequired(RoXacError):
     """Raised when roXac is used before first-run initialisation."""
     pass
